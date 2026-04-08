@@ -1,1 +1,23 @@
-{}
+{
+  "account_a": {
+    "name": "M1 (40\u20ac)",
+    "initial": 40.0,
+    "cash": 40.0,
+    "equity": 40.0,
+    "position": null,
+    "trades": [],
+    "equity_history": []
+  },
+  "account_b": {
+    "name": "S4 (160\u20ac)",
+    "initial": 160.0,
+    "cash": 160.0,
+    "equity": 160.0,
+    "position": null,
+    "trades": [],
+    "equity_history": []
+  },
+  "last_signal": 0,
+  "last_run": null,
+  "runs": 0
+}
