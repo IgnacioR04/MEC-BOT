@@ -1,12 +1,9 @@
 name: MEC Paper Trading Bot
 
 on:
-  # Disparo externo desde cron.job.de (latencia ~5-10s total)
   workflow_dispatch:
-
-  # Cron nativo de GitHub como fallback (latencia ~30-60s)
   schedule:
-    - cron: "* * * * *"   # cada minuto
+    - cron: "* * * * *"
 
 jobs:
   run-bot:
@@ -14,19 +11,19 @@ jobs:
     timeout-minutes: 8
 
     permissions:
-      contents: write   # necesario para git push
+      contents: write
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"          # cachea dependencias → ahorra ~20s en segunda ejecución
+          cache: "pip"
 
       - name: Install dependencies
         run: pip install -r requirements.txt --quiet
