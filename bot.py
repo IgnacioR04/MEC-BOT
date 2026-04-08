@@ -87,13 +87,21 @@ def download_with_live_candle(ticker="BTC-USD", start="2010-01-01"):
             if cols: return float(df[cols[0]].iloc[0])
         return np.nan
 
-    def _col_series(df, names):
-        for n in names:
-            if n in df.columns: return df[n]
-        for n in names:
-            cols = [c for c in df.columns if (isinstance(c, tuple) and c[0]==n) or c==n]
-            if cols: return df[cols[0]]
-        return pd.Series(dtype=float)
+   def _col_series(df, names):
+    for n in names:
+        if n in df.columns:
+            s = df[n]
+            if isinstance(s, pd.DataFrame):
+                s = s.iloc[:, 0]
+            return s.squeeze()
+    for n in names:
+        cols = [c for c in df.columns if (isinstance(c, tuple) and c[0]==n) or c==n]
+        if cols:
+            s = df[cols[0]]
+            if isinstance(s, pd.DataFrame):
+                s = s.iloc[:, 0]
+            return s.squeeze()
+    return pd.Series(dtype=float)
 
     live_open  = float(_col_series(day_slice, ["Open"]).iloc[0])
     live_high  = float(_col_series(day_slice, ["High"]).max())
