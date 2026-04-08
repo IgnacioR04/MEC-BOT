@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name  "mec-bot"
           git config user.email "mec-bot@noreply.github.com"
+          git pull --rebase origin main
           git add docs/data.json state.json
-          # Solo hace commit si hay cambios reales
           git diff --cached --quiet || git commit -m "bot: update [$(date -u '+%H:%M:%S UTC')]"
           git push
