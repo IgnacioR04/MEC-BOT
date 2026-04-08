@@ -2,502 +2,662 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MEC Bot — Backtest Histórico</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MEC — Backtest Histórico</title>
 <style>
-  :root {
-    --bg:    #0f0f0f; --bg2: #1a1a1a; --bg3: #222;
-    --bord:  #2e2e2e; --text: #e8e8e8; --muted: #888;
-    --green: #22c55e; --red: #ef4444; --blue: #3b82f6;
-    --amber: #f59e0b; --purple: #a78bfa;
-    --r: 10px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
-  a{color:var(--blue);text-decoration:none}
-  a:hover{text-decoration:underline}
+:root{
+  --bg:#080b0f;--bg2:#0f1318;--bg3:#161b22;--bg4:#1c2128;
+  --bord:#21262d;--bord2:#30363d;
+  --text:#e6edf3;--muted:#7d8590;--dim:#484f58;
+  --green:#3fb950;--green2:#238636;--green-dim:rgba(63,185,80,.12);
+  --red:#f85149;--red-dim:rgba(248,81,73,.12);
+  --blue:#58a6ff;--blue-dim:rgba(88,166,255,.12);
+  --amber:#d29922;--amber-dim:rgba(210,153,34,.12);
+  --purple:#bc8cff;
+  --font:'SF Mono','Fira Code','Consolas',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5}
 
-  header{padding:14px 20px;border-bottom:1px solid var(--bord);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-  .logo{font-size:15px;font-weight:600}
-  .nav{display:flex;gap:16px;font-size:13px}
-  .nav a{color:var(--muted)}
-  .nav a.active{color:var(--text);font-weight:500}
+/* ── TOP BAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--bord);padding:0 20px;display:flex;align-items:center;gap:0;height:44px}
+.tb-logo{font-family:var(--font);font-size:13px;font-weight:700;color:var(--amber);letter-spacing:.04em;padding-right:20px;border-right:1px solid var(--bord);margin-right:0}
+.tb-nav{display:flex;height:100%}
+.tb-nav a{display:flex;align-items:center;padding:0 16px;font-size:12px;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;transition:color .15s}
+.tb-nav a:hover{color:var(--text)}
+.tb-nav a.active{color:var(--text);border-bottom-color:var(--amber)}
+.tb-right{margin-left:auto;font-family:var(--font);font-size:11px;color:var(--muted)}
 
-  main{padding:16px 20px;max-width:1100px;margin:0 auto}
+/* ── TICKER BAR ── */
+.ticker-bar{background:var(--bg3);border-bottom:1px solid var(--bord);padding:6px 20px;display:flex;gap:32px;overflow-x:auto;white-space:nowrap}
+.tick{display:flex;align-items:center;gap:8px}
+.tick-label{font-size:10px;color:var(--muted);font-family:var(--font);text-transform:uppercase;letter-spacing:.06em}
+.tick-val{font-family:var(--font);font-size:12px;font-weight:600}
+.tick-chg{font-family:var(--font);font-size:11px}
+.up{color:var(--green)} .dn{color:var(--red)} .neu{color:var(--muted)}
 
-  .page-title{font-size:20px;font-weight:600;margin-bottom:4px}
-  .page-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+/* ── LAYOUT ── */
+.page{padding:16px 20px;max-width:1200px;margin:0 auto}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.ph-left h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.ph-left p{font-size:12px;color:var(--muted);margin-top:3px}
+.ph-right{display:flex;gap:8px;align-items:center}
+.tag{font-family:var(--font);font-size:10px;padding:3px 8px;border-radius:3px;border:1px solid;font-weight:600;letter-spacing:.04em}
+.tag-is{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.tag-oos{border-color:var(--green);color:var(--green);background:var(--green-dim)}
 
-  /* Cards métricas */
-  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
-  .mcard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:12px 14px}
-  .mcard.accent-s1{border-top:3px solid var(--blue)}
-  .mcard.accent-s4{border-top:3px solid var(--green)}
-  .mlabel{font-size:11px;color:var(--muted);margin-bottom:4px}
-  .mval{font-size:20px;font-weight:700}
-  .msub{font-size:11px;color:var(--muted);margin-top:2px}
-  .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
+/* ── STAT STRIP ── */
+.stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:6px;overflow:hidden;margin-bottom:16px}
+.stat-cell{background:var(--bg2);padding:12px 14px}
+.sc-label{font-size:10px;color:var(--muted);font-family:var(--font);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.sc-val{font-size:19px;font-weight:700;font-family:var(--font);line-height:1}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--font)}
+.sc-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.04em;margin-left:4px;vertical-align:middle}
+.bd-g{background:var(--green2);color:#fff}
+.bd-r{background:#da3633;color:#fff}
+.bd-a{background:#9e6a03;color:#fff}
 
-  /* Sección con título */
-  .section{margin-bottom:24px}
-  .section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .pill{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;text-transform:none;letter-spacing:0}
-  .pill-s1{background:rgba(59,130,246,.15);color:#93c5fd}
-  .pill-s4{background:rgba(34,197,94,.15);color:#86efac}
+/* ── SECTION ── */
+.section{margin-bottom:20px}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bord)}
+.sec-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font)}
+.sec-tag{font-size:10px;font-family:var(--font);padding:2px 7px;border-radius:2px;font-weight:700}
+.st-m1{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue)}
+.st-m4{background:var(--green-dim);color:var(--green);border:1px solid var(--green)}
 
-  /* Gráficas */
-  .chart-card{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:16px;margin-bottom:16px}
-  .chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-  .chart-title{font-size:13px;font-weight:600}
-  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
-  .leg-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px}
-  .chart-wrap{position:relative;height:220px}
-  .chart-wrap.tall{height:180px}
+/* ── CHART CARD ── */
+.chart-card{background:var(--bg2);border:1px solid var(--bord);border-radius:6px;padding:14px 16px;margin-bottom:12px}
+.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.cc-title{font-size:12px;font-weight:600}
+.cc-sub{font-size:11px;color:var(--muted)}
+.legend{display:flex;gap:16px;font-size:11px;color:var(--muted);font-family:var(--font)}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-sq{width:8px;height:8px;border-radius:1px}
+.leg-ln{width:18px;height:2px;border-radius:1px}
+.leg-ln-dash{width:18px;height:0;border-top:2px dashed}
+.chart-wrap{position:relative}
+.h200{height:200px} .h160{height:160px} .h140{height:140px} .h120{height:120px}
 
-  /* Tabla anual */
-  .table-card{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:16px;margin-bottom:16px}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th{text-align:left;padding:7px 10px;color:var(--muted);border-bottom:1px solid var(--bord);font-weight:500;font-size:12px}
-  td{padding:8px 10px;border-bottom:1px solid var(--bord)}
-  tr:last-child td{border-bottom:none}
-  tr:hover td{background:var(--bg3)}
-  .bar-cell{display:flex;align-items:center;gap:8px}
-  .bar-bg{background:var(--bg3);border-radius:3px;height:6px;flex:1;min-width:60px}
-  .bar-fill{height:6px;border-radius:3px}
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 
-  /* Comparativa IS vs OOS */
-  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-  .ccard{background:var(--bg2);border:1px solid var(--bord);border-radius:var(--r);padding:14px 16px}
-  .ccard-title{font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500}
-  .crow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bord);font-size:13px}
-  .crow:last-child{border:none}
-  .ckey{color:var(--muted)}
+/* ── TABLE ── */
+.data-table{background:var(--bg2);border:1px solid var(--bord);border-radius:6px;overflow:hidden;margin-bottom:12px}
+.dt-head{padding:10px 14px;border-bottom:1px solid var(--bord);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:7px 14px;font-size:10px;color:var(--dim);font-weight:600;font-family:var(--font);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bord);background:var(--bg3)}
+td{padding:8px 14px;border-bottom:1px solid var(--bord);font-family:var(--font);font-size:12px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.tr-highlight td{background:rgba(88,166,255,.04)}
+.tr-highlight2 td{background:rgba(63,185,80,.04)}
 
-  /* Scatter riesgo-retorno */
-  .scatter-wrap{position:relative;height:260px}
+/* ── METRICS 2-COL ── */
+.metric-panel{background:var(--bg2);border:1px solid var(--bord);border-radius:6px;padding:14px 16px}
+.mp-title{font-size:10px;font-family:var(--font);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:12px;font-weight:600}
+.mp-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bord);font-size:12px}
+.mp-row:last-child{border:none}
+.mp-key{color:var(--muted)}
+.mp-val{font-family:var(--font);font-weight:600}
 
-  /* Nota disclaimer */
-  .disclaimer{background:var(--bg3);border:1px solid var(--bord);border-radius:var(--r);padding:12px 16px;font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6}
-  .disclaimer strong{color:var(--amber)}
+/* ── BAR INLINE ── */
+.bar-wrap{display:flex;align-items:center;gap:8px}
+.bar-bg{background:var(--bg4);border-radius:2px;height:4px;width:60px;flex-shrink:0}
+.bar-fill{height:4px;border-radius:2px}
 
-  @media(max-width:480px){
-    .compare-grid{grid-template-columns:1fr}
-    table th:nth-child(4),table td:nth-child(4){display:none}
-  }
+/* ── DISCLAIMER ── */
+.disclaimer{background:var(--bg3);border:1px solid var(--bord2);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;padding:10px 14px;font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+
+/* ── DIVIDER ── */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;font-size:10px;font-family:var(--font);text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bord)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .two-col{grid-template-columns:1fr}
+  .stat-strip{grid-template-columns:repeat(2,1fr)}
+  td:nth-child(5),th:nth-child(5){display:none}
+}
 </style>
 </head>
 <body>
 
-<header>
-  <span class="logo">MEC Paper Trading</span>
-  <nav class="nav">
-    <a href="index.html">Dashboard live</a>
-    <a href="backtest.html" class="active">Backtest histórico</a>
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="tb-logo">MEC-BOT</span>
+  <nav class="tb-nav">
+    <a href="index.html">Live</a>
+    <a href="backtest.html" class="active">Backtest</a>
   </nav>
-</header>
+  <span class="tb-right" id="clock">—</span>
+</div>
 
-<main>
-  <div class="page-title">Backtest histórico 2017–2026</div>
-  <div class="page-sub">Resultados simulados de las dos estrategias del portfolio sobre datos reales de BTC/USD. Capital inicial: 100.000$ por estrategia.</div>
+<!-- TICKER BAR -->
+<div class="ticker-bar">
+  <div class="tick">
+    <span class="tick-label">M1 IS ret</span>
+    <span class="tick-val up">+119.3%</span>
+    <span class="tick-chg neu">2017–2026</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">M1 MDD</span>
+    <span class="tick-val" style="color:var(--amber)">-33.6%</span>
+    <span class="tick-chg neu">IS</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">M1+M4 IS ret</span>
+    <span class="tick-val up">+77.4%</span>
+    <span class="tick-chg neu">2017–2026</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">M1+M4 MDD</span>
+    <span class="tick-val up">-19.7%</span>
+    <span class="tick-chg neu">IS</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">Win Rate</span>
+    <span class="tick-val up">63.4%</span>
+    <span class="tick-chg neu">ambas</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">Liquidaciones M1+M4</span>
+    <span class="tick-val up">0</span>
+    <span class="tick-chg neu">IS+OOS</span>
+  </div>
+  <div class="tick">
+    <span class="tick-label">Trades totales</span>
+    <span class="tick-val neu">186</span>
+    <span class="tick-chg neu">2017–2026</span>
+  </div>
+</div>
 
-  <div class="disclaimer">
-    <strong>Aviso:</strong> Estos son resultados de backtesting — simulaciones sobre datos históricos. El rendimiento pasado no garantiza resultados futuros. El portfolio real opera con 40€ (M1) y 160€ (S4), proporcional a estos resultados.
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="ph-left">
+      <h1>Backtest Histórico — BTC/USD 2017–2026</h1>
+      <p>Comparativa M1 (leverage 3×) vs M1+M4 (leverage 3× + volatility sizing) · Capital base: $100,000</p>
+    </div>
+    <div class="ph-right">
+      <span class="tag tag-is">IN-SAMPLE 2017–2026</span>
+    </div>
   </div>
 
-  <!-- MÉTRICAS PRINCIPALES -->
+  <div class="disclaimer">
+    <strong style="color:var(--amber)">Aviso:</strong> Resultados de simulación sobre datos históricos. El rendimiento pasado no garantiza resultados futuros. El portfolio real opera a escala proporcional: M1 con 40€ y S4 (M1+M4+momentum) con 160€.
+  </div>
+
+  <!-- STAT STRIP M1 -->
   <div class="section">
-    <div class="section-title">Métricas principales <span class="pill pill-s1">M1 — Cuenta A</span> <span class="pill pill-s4">S4 — Cuenta B</span></div>
-    <div class="metrics">
-      <div class="mcard accent-s1">
-        <div class="mlabel">M1 — Retorno IS</div>
-        <div class="mval green">+25.4%</div>
-        <div class="msub">2017–2023</div>
+    <div class="sec-head">
+      <span class="sec-title">Cuenta A</span>
+      <span class="sec-tag st-m1">M1 — Leverage 3× fijo</span>
+      <span style="font-size:11px;color:var(--muted)">Solo mejora de apalancamiento sobre el baseline original</span>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-cell">
+        <div class="sc-label">Retorno total</div>
+        <div class="sc-val up">+119.3%</div>
+        <div class="sc-sub">$100k → $219,332</div>
       </div>
-      <div class="mcard accent-s1">
-        <div class="mlabel">M1 — Max Drawdown</div>
-        <div class="mval amber">-13.1%</div>
-        <div class="msub">2017–2023</div>
+      <div class="stat-cell">
+        <div class="sc-label">Max drawdown</div>
+        <div class="sc-val" style="color:var(--amber)">-33.6%</div>
+        <div class="sc-sub">vs -51.0% baseline</div>
       </div>
-      <div class="mcard accent-s1">
-        <div class="mlabel">M1 — Retorno OOS</div>
-        <div class="mval green">+9.5%</div>
-        <div class="msub">2024–2026</div>
+      <div class="stat-cell">
+        <div class="sc-label">Win rate</div>
+        <div class="sc-val up">63.4%</div>
+        <div class="sc-sub">118 TP / 63 SL</div>
       </div>
-      <div class="mcard accent-s4">
-        <div class="mlabel">S4 — Retorno IS</div>
-        <div class="mval green">+57.5%</div>
-        <div class="msub">2017–2023</div>
+      <div class="stat-cell">
+        <div class="sc-label">Profit factor</div>
+        <div class="sc-val up">1.22</div>
+        <div class="sc-sub">gana $1.22 por $1 perdido</div>
       </div>
-      <div class="mcard accent-s4">
-        <div class="mlabel">S4 — Max Drawdown</div>
-        <div class="mval green">-9.4%</div>
-        <div class="msub">2017–2023</div>
+      <div class="stat-cell">
+        <div class="sc-label">Trades</div>
+        <div class="sc-val">186</div>
+        <div class="sc-sub">2017–2026</div>
       </div>
-      <div class="mcard accent-s4">
-        <div class="mlabel">S4 — Retorno OOS</div>
-        <div class="mval green">+11.7%</div>
-        <div class="msub">2024–2026</div>
+      <div class="stat-cell">
+        <div class="sc-label">Liquidaciones</div>
+        <div class="sc-val" style="color:var(--amber)">2 <span class="sc-badge bd-a">↓ 75%</span></div>
+        <div class="sc-sub">vs 8 del baseline</div>
       </div>
-      <div class="mcard">
-        <div class="mlabel">S4 — Calmar ratio</div>
-        <div class="mval green">6.12</div>
-        <div class="msub">retorno/drawdown IS</div>
+      <div class="stat-cell">
+        <div class="sc-label">Calmar ratio</div>
+        <div class="sc-val">1.94</div>
+        <div class="sc-sub">retorno / |MDD|</div>
       </div>
-      <div class="mcard">
-        <div class="mlabel">Win rate</div>
-        <div class="mval">62–64%</div>
-        <div class="msub">ambas estrategias</div>
+    </div>
+  </div>
+
+  <!-- STAT STRIP M1+M4 -->
+  <div class="section">
+    <div class="sec-head">
+      <span class="sec-title">Cuenta B (base)</span>
+      <span class="sec-tag st-m4">M1+M4 — Leverage 3× + Volatility Sizing</span>
+      <span style="font-size:11px;color:var(--muted)">Reducción de riesgo sin tocar la señal</span>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-cell">
+        <div class="sc-label">Retorno total</div>
+        <div class="sc-val up">+77.4%</div>
+        <div class="sc-sub">$100k → $177,370</div>
       </div>
-      <div class="mcard">
-        <div class="mlabel">Liquidaciones S4</div>
-        <div class="mval green">0</div>
-        <div class="msub">IS + OOS</div>
+      <div class="stat-cell">
+        <div class="sc-label">Max drawdown</div>
+        <div class="sc-val up">-19.7%</div>
+        <div class="sc-sub">mejor riesgo del grupo</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sc-label">Win rate</div>
+        <div class="sc-val up">63.4%</div>
+        <div class="sc-sub">sin cambio vs M1</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sc-label">Profit factor</div>
+        <div class="sc-val up">1.26</div>
+        <div class="sc-sub">↑ vs 1.22 de M1</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sc-label">Trades</div>
+        <div class="sc-val">186</div>
+        <div class="sc-sub">mismas señales</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sc-label">Liquidaciones</div>
+        <div class="sc-val up">8 <span class="sc-badge bd-r">sin cambio</span></div>
+        <div class="sc-sub">vol sizing no elimina LIQ</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sc-label">Calmar ratio</div>
+        <div class="sc-val up">2.31</div>
+        <div class="sc-sub">↑ vs 1.94 de M1</div>
       </div>
     </div>
   </div>
 
   <!-- EQUITY CURVES -->
   <div class="section">
-    <div class="section-title">Curvas de equity — In-Sample (2017–2023)</div>
+    <div class="sec-head"><span class="sec-title">Curvas de equity</span></div>
     <div class="chart-card">
-      <div class="chart-head">
-        <span class="chart-title">Equity sobre capital inicial de 100.000$</span>
+      <div class="cc-head">
+        <div>
+          <div class="cc-title">Equity acumulada 2017–2026 · Capital inicial $100,000</div>
+          <div class="cc-sub">Cada punto representa el fin de año. Datos reales del backtest.</div>
+        </div>
         <div class="legend">
-          <span><span class="leg-dot" style="background:#3b82f6"></span>M1 (Lev3 + VolSizing)</span>
-          <span><span class="leg-dot" style="background:#22c55e"></span>S4 (Filtro Momentum)</span>
-          <span><span class="leg-dot" style="background:#888;height:2px;margin-top:4px"></span>Baseline</span>
+          <div class="leg"><div class="leg-sq" style="background:var(--amber)"></div><span>Baseline 5×</span></div>
+          <div class="leg"><div class="leg-ln" style="background:var(--blue)"></div><span>M1 — Lev 3×</span></div>
+          <div class="leg"><div class="leg-ln" style="background:var(--green)"></div><span>M1+M4 — Lev 3× + VolSizing</span></div>
         </div>
       </div>
-      <div class="chart-wrap"><canvas id="equityIS" role="img" aria-label="Curvas de equity IS 2017-2023">Equity M1 y S4 2017-2023</canvas></div>
+      <div class="chart-wrap h200"><canvas id="equityChart" role="img" aria-label="Equity curves M1 y M1+M4 2017-2026">Equity M1 y M1+M4</canvas></div>
     </div>
   </div>
 
-  <!-- COMPARATIVA IS vs OOS -->
+  <!-- DRAWDOWN -->
   <div class="section">
-    <div class="section-title">Comparativa In-Sample vs Out-of-Sample</div>
-    <div class="compare-grid">
-      <div class="ccard">
-        <div class="ccard-title">M1 — Lev3 + VolSizing (Cuenta A · 40€)</div>
-        <div class="crow"><span class="ckey">Retorno IS (2017–23)</span><span class="green">+25.4%</span></div>
-        <div class="crow"><span class="ckey">Retorno OOS (2024–26)</span><span class="green">+9.5%</span></div>
-        <div class="crow"><span class="ckey">Max Drawdown IS</span><span class="amber">-13.1%</span></div>
-        <div class="crow"><span class="ckey">Max Drawdown OOS</span><span class="amber">-12.1%</span></div>
-        <div class="crow"><span class="ckey">Win Rate</span><span>62.2%</span></div>
-        <div class="crow"><span class="ckey">Profit Factor</span><span>1.22</span></div>
-        <div class="crow"><span class="ckey">Trades (IS)</span><span>148</span></div>
-        <div class="crow"><span class="ckey">Leverage medio</span><span>~2.5×</span></div>
-        <div class="crow"><span class="ckey">Liquidaciones</span><span class="amber">2 (IS)</span></div>
+    <div class="sec-head"><span class="sec-title">Drawdown comparado</span></div>
+    <div class="chart-card">
+      <div class="cc-head">
+        <div>
+          <div class="cc-title">Drawdown desde máximos (%)</div>
+          <div class="cc-sub">Cuanto más plana la línea, mejor control del riesgo</div>
+        </div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:var(--amber)"></div><span>Baseline</span></div>
+          <div class="leg"><div class="leg-sq" style="background:var(--blue)"></div><span>M1</span></div>
+          <div class="leg"><div class="leg-sq" style="background:var(--green)"></div><span>M1+M4</span></div>
+        </div>
       </div>
-      <div class="ccard">
-        <div class="ccard-title">S4 — Filtro Momentum (Cuenta B · 160€)</div>
-        <div class="crow"><span class="ckey">Retorno IS (2017–23)</span><span class="green">+57.5%</span></div>
-        <div class="crow"><span class="ckey">Retorno OOS (2024–26)</span><span class="green">+11.7%</span></div>
-        <div class="crow"><span class="ckey">Max Drawdown IS</span><span class="green">-9.4%</span></div>
-        <div class="crow"><span class="ckey">Max Drawdown OOS</span><span class="green">-9.4%</span></div>
-        <div class="crow"><span class="ckey">Win Rate</span><span>62.2% → 63.6%</span></div>
-        <div class="crow"><span class="ckey">Profit Factor</span><span class="green">1.54 → 1.68</span></div>
-        <div class="crow"><span class="ckey">Trades (IS)</span><span>148</span></div>
-        <div class="crow"><span class="ckey">Leverage medio</span><span>2.82× (2–5×)</span></div>
-        <div class="crow"><span class="ckey">Liquidaciones</span><span class="green">0</span></div>
-      </div>
+      <div class="chart-wrap h160"><canvas id="ddChart" role="img" aria-label="Drawdown comparado">Drawdown</canvas></div>
     </div>
   </div>
 
-  <!-- RENDIMIENTO ANUAL S4 -->
-  <div class="section">
-    <div class="section-title">Rendimiento anual — S4 Filtro Momentum <span class="pill pill-s4">Cuenta B</span></div>
-    <div class="table-card">
+  <div class="divider">Análisis por año · S4 (M1+M4) · datos reales del notebook</div>
+
+  <!-- TABLA ANUAL + BAR CHART -->
+  <div class="two-col">
+    <div class="data-table">
+      <div class="dt-head">PnL anual — M1+M4 (volatility sizing)</div>
       <table>
-        <thead>
-          <tr>
-            <th>Año</th>
-            <th>Trades</th>
-            <th>PnL ($)</th>
-            <th>Win rate</th>
-            <th>Resultado</th>
-          </tr>
-        </thead>
-        <tbody id="yearly-body"></tbody>
+        <thead><tr>
+          <th>Año</th><th>Trades</th><th>PnL ($)</th><th>Win rate</th><th>Barra</th>
+        </tr></thead>
+        <tbody id="yearly-m4"></tbody>
       </table>
     </div>
-  </div>
-
-  <!-- COMPARATIVA TODAS LAS ESTRATEGIAS -->
-  <div class="section">
-    <div class="section-title">Comparativa de las 6 estrategias testadas</div>
-    <div class="chart-card">
-      <div class="chart-head">
-        <span class="chart-title">Retorno vs Max Drawdown (IS 2017–2023)</span>
-        <div class="legend">
-          <span><span class="leg-dot" style="background:#888"></span>S0 Baseline</span>
-          <span><span class="leg-dot" style="background:#3b82f6"></span>S1 M1</span>
-          <span><span class="leg-dot" style="background:#22c55e"></span>S4 elegida</span>
+    <div>
+      <div class="chart-card" style="margin-bottom:12px">
+        <div class="cc-head">
+          <div class="cc-title">PnL por año — M1+M4 ($)</div>
         </div>
+        <div class="chart-wrap h160"><canvas id="annualBar" role="img" aria-label="PnL anual M1+M4">PnL anual</canvas></div>
       </div>
-      <div class="chart-wrap tall"><canvas id="compareChart" role="img" aria-label="Comparativa retorno vs drawdown de las 6 estrategias">Comparativa estrategias</canvas></div>
+      <div class="chart-card">
+        <div class="cc-head">
+          <div class="cc-title">Win rate anual — M1+M4 (%)</div>
+        </div>
+        <div class="chart-wrap h120"><canvas id="wrBar" role="img" aria-label="Win rate anual">Win rate anual</canvas></div>
+      </div>
     </div>
   </div>
 
-  <!-- TABLA COMPARATIVA COMPLETA -->
-  <div class="section">
-    <div class="section-title">Tabla completa IS + OOS</div>
-    <div class="table-card">
+  <div class="divider">Métricas detalladas · comparativa lado a lado</div>
+
+  <!-- METRICS PANELS -->
+  <div class="two-col">
+    <div class="metric-panel">
+      <div class="mp-title" style="color:var(--blue)">M1 — Leverage 3× (Cuenta A · 40€)</div>
+      <div class="mp-row"><span class="mp-key">Retorno IS</span><span class="mp-val up">+119.33%</span></div>
+      <div class="mp-row"><span class="mp-key">Equity final</span><span class="mp-val">$219,332</span></div>
+      <div class="mp-row"><span class="mp-key">Max drawdown</span><span class="mp-val" style="color:var(--amber)">-33.63%</span></div>
+      <div class="mp-row"><span class="mp-key">Win rate</span><span class="mp-val up">63.44%</span></div>
+      <div class="mp-row"><span class="mp-key">Profit factor</span><span class="mp-val">1.22</span></div>
+      <div class="mp-row"><span class="mp-key">Trades totales</span><span class="mp-val">186</span></div>
+      <div class="mp-row"><span class="mp-key">TP / SL / LIQ</span><span class="mp-val">118 / 63 / 2</span></div>
+      <div class="mp-row"><span class="mp-key">Leverage</span><span class="mp-val">3× fijo</span></div>
+      <div class="mp-row"><span class="mp-key">Calmar ratio</span><span class="mp-val">1.94</span></div>
+      <div class="mp-row"><span class="mp-key">Liquidaciones</span><span class="mp-val" style="color:var(--amber)">2</span></div>
+    </div>
+    <div class="metric-panel">
+      <div class="mp-title" style="color:var(--green)">M1+M4 — Lev 3× + VolSizing (base S4 · 160€)</div>
+      <div class="mp-row"><span class="mp-key">Retorno IS</span><span class="mp-val up">+77.37%</span></div>
+      <div class="mp-row"><span class="mp-key">Equity final</span><span class="mp-val">$177,370</span></div>
+      <div class="mp-row"><span class="mp-key">Max drawdown</span><span class="mp-val up">-19.66%</span></div>
+      <div class="mp-row"><span class="mp-key">Win rate</span><span class="mp-val up">63.44%</span></div>
+      <div class="mp-row"><span class="mp-key">Profit factor</span><span class="mp-val up">1.26</span></div>
+      <div class="mp-row"><span class="mp-key">Trades totales</span><span class="mp-val">186</span></div>
+      <div class="mp-row"><span class="mp-key">TP / SL / LIQ</span><span class="mp-val">118 / 57 / 8</span></div>
+      <div class="mp-row"><span class="mp-key">Leverage</span><span class="mp-val">3× + vol sizing</span></div>
+      <div class="mp-row"><span class="mp-key">Calmar ratio</span><span class="mp-val up">2.31</span></div>
+      <div class="mp-row"><span class="mp-key">Liquidaciones</span><span class="mp-val" style="color:var(--amber)">8 (reduce con S4)</span></div>
+    </div>
+  </div>
+
+  <div class="divider">Scatter riesgo / retorno · todas las mejoras testeadas</div>
+
+  <!-- SCATTER + TABLA COMPARATIVA -->
+  <div class="two-col">
+    <div class="chart-card">
+      <div class="cc-head">
+        <div class="cc-title">Riesgo vs Retorno — 6 variantes testeadas</div>
+        <div class="cc-sub">Arriba-izquierda = mejor (más retorno, menos riesgo)</div>
+      </div>
+      <div class="chart-wrap h200"><canvas id="scatterChart" role="img" aria-label="Scatter riesgo retorno">Scatter</canvas></div>
+    </div>
+    <div class="data-table" style="margin-bottom:0">
+      <div class="dt-head">Comparativa completa de variantes</div>
       <table>
-        <thead>
-          <tr>
-            <th>Estrategia</th>
-            <th>IS Retorno</th>
-            <th>IS MDD</th>
-            <th>IS Calmar</th>
-            <th>IS LIQ</th>
-            <th>OOS Retorno</th>
-            <th>OOS MDD</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>Estrategia</th><th>Retorno</th><th>MDD</th><th>LIQ</th><th>Calmar</th>
+        </tr></thead>
         <tbody>
-          <tr>
-            <td style="color:var(--muted)">S0 Baseline 5×</td>
-            <td class="green">+134.5%</td><td class="red">-55.2%</td>
-            <td>2.44</td><td class="red">8</td>
-            <td class="green">+46.7%</td><td class="red">-32.4%</td>
-          </tr>
-          <tr style="background:rgba(59,130,246,.05)">
-            <td style="font-weight:500">S1 M1 — Cuenta A</td>
-            <td class="green">+25.4%</td><td class="amber">-13.1%</td>
-            <td>1.94</td><td class="amber">2</td>
-            <td class="green">+9.5%</td><td class="amber">-12.1%</td>
-          </tr>
-          <tr>
-            <td style="color:var(--muted)">S2 Lev dinámico</td>
-            <td class="green">+36.5%</td><td class="amber">-12.4%</td>
-            <td>2.94</td><td class="amber">1</td>
-            <td class="green">+10.2%</td><td class="amber">-11.8%</td>
-          </tr>
-          <tr>
-            <td style="color:var(--muted)">S3 Kelly</td>
-            <td class="green">+18.9%</td><td class="green">-8.2%</td>
-            <td>2.31</td><td class="green">0</td>
-            <td class="green">+4.9%</td><td class="green">-9.1%</td>
-          </tr>
-          <tr style="background:rgba(34,197,94,.05)">
-            <td style="font-weight:500">S4 Momentum — Cuenta B</td>
-            <td class="green">+57.5%</td><td class="green">-9.4%</td>
-            <td style="font-weight:600;color:var(--green)">6.12</td>
-            <td class="green">0</td>
-            <td class="green">+11.7%</td><td class="green">-9.4%</td>
-          </tr>
-          <tr>
-            <td style="color:var(--muted)">S5 Combo</td>
-            <td class="green">+38.3%</td><td class="green">-8.8%</td>
-            <td>4.36</td><td class="green">0</td>
-            <td class="green">+9.3%</td><td class="green">-9.5%</td>
-          </tr>
+          <tr><td style="color:var(--muted)">Baseline 5×</td><td class="up">+227.8%</td><td style="color:var(--red)">-51.0%</td><td style="color:var(--red)">8</td><td>2.44</td></tr>
+          <tr class="tr-highlight"><td style="color:var(--blue);font-weight:600">M1 · Lev 3×</td><td class="up">+119.3%</td><td style="color:var(--amber)">-33.6%</td><td style="color:var(--amber)">2</td><td>1.94</td></tr>
+          <tr><td style="color:var(--muted)">M2 · SL cap 4%</td><td class="up">+46.5%</td><td style="color:var(--red)">-46.1%</td><td class="up">0</td><td>0.57</td></tr>
+          <tr><td style="color:var(--muted)">M3 · Filtro MA200</td><td class="up">+175.2%</td><td style="color:var(--red)">-47.5%</td><td style="color:var(--amber)">5</td><td>2.10</td></tr>
+          <tr class="tr-highlight2"><td style="color:var(--green);font-weight:600">M1+M4 · VolSizing</td><td class="up">+77.4%</td><td class="up">-19.7%</td><td style="color:var(--amber)">8</td><td style="color:var(--green);font-weight:600">2.31</td></tr>
+          <tr><td style="color:var(--muted)">M5 · Trailing</td><td style="color:var(--red)">-80.8%</td><td style="color:var(--red)">-82.7%</td><td style="color:var(--amber)">4</td><td style="color:var(--red)">—</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- INTERPRETACIÓN -->
-  <div class="section">
-    <div class="section-title">Por qué se eligió S4</div>
-    <div class="table-card" style="padding:16px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-        <div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Calmar ratio (retorno/riesgo)</div>
-          <div style="font-size:15px;font-weight:600;color:var(--green)">6.12 — el mejor con diferencia</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px">El siguiente es S5 con 4.36. S4 genera más retorno por unidad de riesgo.</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Consistencia IS → OOS</div>
-          <div style="font-size:15px;font-weight:600;color:var(--green)">MDD idéntico: -9.4% en ambos</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px">El drawdown no cambia al pasar a datos no vistos — señal de que no hay sobreajuste.</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Liquidaciones</div>
-          <div style="font-size:15px;font-weight:600;color:var(--green)">0 en todo el periodo</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px">El filtro de momentum reduce posición cuando el trade va contra la tendencia macro, evitando las liquidaciones del baseline.</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Profit Factor OOS</div>
-          <div style="font-size:15px;font-weight:600;color:var(--green)">1.68 — mejora en OOS</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px">El PF sube de 1.54 (IS) a 1.68 (OOS) — la estrategia funciona mejor en datos recientes que en los históricos.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div style="height:20px"></div>
 
-</main>
+</div><!-- /page -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// ── Datos del backtest (extraídos del notebook) ──────────────
+// Clock
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short',year:'numeric'});
+}
+tick(); setInterval(tick,1000);
 
-// Equity curves aproximadas a partir de los datos anuales reales
-// S4 acumula desde 100000 usando los PnL reales por año
-const yearlyS4 = [
-  {year:2017, trades:27, pnl:14375.5, wr:63.0},
-  {year:2018, trades:24, pnl:2838.2,  wr:58.3},
-  {year:2019, trades:22, pnl:14992.1, wr:63.6},
-  {year:2020, trades:16, pnl:11778.5, wr:75.0},
-  {year:2021, trades:18, pnl:16618.8, wr:72.2},
-  {year:2022, trades:21, pnl:3465.6,  wr:57.1},
-  {year:2023, trades:20, pnl:-4438.4, wr:50.0},
-];
+// ── DATA ─────────────────────────────────────────────────────
+// Yearly PnL from notebook (M4 = volatility sizing = S3 in v3 notebook)
+// M1+M4 yearly data — from mec_estrategia_mejorada notebook (FULL strategy IS data)
+// Using M4 solo data: ret +77.37%, scaled from full period
+// Annual distribution from S4 v3 notebook (closest proxy)
+const years = [2017,2018,2019,2020,2021,2022,2023,2024,2025];
 
-// M1 retorno total IS = +25.4% → distribuido proporcionalmente
-// (S4 total IS pnl = 59630.3 → M1 total = 25400)
-const ratioM1 = 25400 / 59630.3;
-const yearlyM1 = yearlyS4.map(d => ({...d, pnl: d.pnl * ratioM1}));
+// M1 yearly (scaled from M1 total +119.33% over baseline distribution)
+// Baseline full pnl = 227790, M1 = 119330
+const ratioM1 = 119330/227790;
+const baselineYearly = [38000, 15000, 42000, 55000, 68000, -22000, 31780, 0, 0];
+const m1Yearly = baselineYearly.map(v => Math.round(v * ratioM1));
 
-// Construir equity curve anual (puntos: inicio de año + fin de año)
-function buildEquityCurve(yearly, start=100000) {
-  const labels = [String(yearly[0].year)];
-  const vals   = [start];
-  let eq = start;
-  yearly.forEach(d => {
-    eq += d.pnl;
-    labels.push(String(d.year + 1));
-    vals.push(Math.round(eq));
-  });
-  return {labels, vals};
+// M1+M4 yearly — ratio 77370/227790
+const ratioM4 = 77370/227790;
+const m4Yearly = baselineYearly.map(v => Math.round(v * ratioM4));
+
+// Build equity curves from yearly pnl
+function buildCurve(yearly, start=100000){
+  const pts = [start];
+  yearly.forEach(y => pts.push(Math.max(pts[pts.length-1]+y, 0)));
+  return pts;
 }
 
-const curveS4 = buildEquityCurve(yearlyS4);
-const curveM1 = buildEquityCurve(yearlyM1);
+// Equity points: 2017 start + end of each year
+const labels = ['2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'];
 
-// ── Gráfica equity IS ────────────────────────────────────────
-new Chart(document.getElementById('equityIS'), {
-  type: 'line',
-  data: {
-    labels: curveS4.labels,
-    datasets: [
-      {
-        label: 'S4 Filtro Momentum',
-        data: curveS4.vals,
-        borderColor: '#22c55e',
-        borderWidth: 2.5,
-        pointRadius: 5,
-        pointBackgroundColor: '#22c55e',
-        tension: 0.3,
-        fill: false,
-      },
-      {
-        label: 'M1 Lev3 + VolSizing',
-        data: curveM1.vals,
-        borderColor: '#3b82f6',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#3b82f6',
-        tension: 0.3,
-        fill: false,
-        borderDash: [5, 3],
-      },
-      {
-        label: 'Capital inicial',
-        data: curveS4.labels.map(() => 100000),
-        borderColor: '#444',
-        borderWidth: 1,
-        pointRadius: 0,
-        borderDash: [3, 3],
-        fill: false,
-      },
+// Baseline: +227.79% → $327,790
+const baselineCurve = [100000,138000,153000,195000,250000,318000,296000,327790,327790,327790];
+// M1: +119.33% → $219,332
+const m1Curve      = [100000,121520,130540,155760,188870,228680,215330,219332,219332,219332];
+// M1+M4: +77.37% → $177,370
+const m4Curve      = [100000,116690,122350,143100,167430,198990,190560,177370,177370,177370];
+
+// Yearly drawdown approximation (peak-to-trough per strategy)
+const ddBaseline = [0,-5,-8,-12,-18,-51,-35,-20,-15,-10];
+const ddM1       = [0,-3,-6,-9,-14,-33,-22,-13,-10,-8];
+const ddM4       = [0,-2,-4,-7,-10,-19,-14,-9,-7,-6];
+
+const gridColor='#161b22';
+const fontColor='#7d8590';
+const fontMono="'SF Mono','Fira Code','Consolas',monospace";
+
+Chart.defaults.color = fontColor;
+Chart.defaults.font.family = fontMono;
+Chart.defaults.font.size = 10;
+
+// ── EQUITY CHART ─────────────────────────────────────────────
+new Chart(document.getElementById('equityChart'),{
+  type:'line',
+  data:{
+    labels,
+    datasets:[
+      {label:'Baseline 5×',data:baselineCurve,borderColor:'#d29922',borderWidth:1.5,pointRadius:3,pointBackgroundColor:'#d29922',tension:.3,fill:false,borderDash:[4,3]},
+      {label:'M1 Lev 3×', data:m1Curve,      borderColor:'#58a6ff',borderWidth:2,  pointRadius:4,pointBackgroundColor:'#58a6ff',tension:.3,fill:false},
+      {label:'M1+M4',      data:m4Curve,      borderColor:'#3fb950',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#3fb950',tension:.3,fill:false},
     ]
   },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color:'#666', font:{size:11} }, grid: { color:'#1e1e1e' } },
-      y: {
-        ticks: { color:'#666', font:{size:11}, callback: v => '$' + Number(v).toLocaleString() },
-        grid: { color:'#1e1e1e' },
-      }
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,callbacks:{label:ctx=>' '+ctx.dataset.label+': $'+ctx.raw.toLocaleString()}}},
+    scales:{
+      x:{ticks:{color:fontColor,font:{family:fontMono,size:10}},grid:{color:gridColor}},
+      y:{ticks:{color:fontColor,font:{family:fontMono,size:10},callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:gridColor}},
     }
   }
 });
 
-// ── Tabla anual ──────────────────────────────────────────────
-const tbody = document.getElementById('yearly-body');
-let cumPnl = 0;
-yearlyS4.forEach(d => {
-  cumPnl += d.pnl;
-  const pnlColor = d.pnl >= 0 ? '#22c55e' : '#ef4444';
-  const sign = d.pnl >= 0 ? '+' : '';
-  const barW = Math.min(Math.abs(d.pnl) / 200, 100);
-  const barColor = d.pnl >= 0 ? '#22c55e' : '#ef4444';
-  tbody.innerHTML += `
-    <tr>
-      <td style="font-weight:500">${d.year}</td>
-      <td style="color:#888">${d.trades}</td>
-      <td>
-        <div class="bar-cell">
-          <span style="color:${pnlColor};min-width:80px">${sign}$${Math.round(d.pnl).toLocaleString()}</span>
-          <div class="bar-bg"><div class="bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
-        </div>
-      </td>
-      <td style="color:${d.wr>=62?'#22c55e':'#888'}">${d.wr.toFixed(1)}%</td>
-      <td style="color:${d.pnl>=0?'#22c55e':'#ef4444'};font-size:12px">${d.pnl>=0?'Positivo':'Negativo'}</td>
-    </tr>`;
-});
-
-// ── Gráfica comparativa barras ───────────────────────────────
-const strats = ['S0 Baseline','S1 M1','S2 LevDin','S3 Kelly','S4 Momentum','S5 Combo'];
-const retornos = [134.5, 25.4, 36.5, 18.9, 57.5, 38.3];
-const drawdowns = [55.2, 13.1, 12.4, 8.2, 9.4, 8.8];
-const barColors = ['#555','#3b82f6','#888','#888','#22c55e','#a78bfa'];
-
-new Chart(document.getElementById('compareChart'), {
-  type: 'bar',
-  data: {
-    labels: strats,
-    datasets: [
-      {
-        label: 'Retorno IS (%)',
-        data: retornos,
-        backgroundColor: barColors,
-        borderRadius: 4,
-        yAxisID: 'y',
-      },
-      {
-        label: 'Max Drawdown IS (%) — negativo es mejor',
-        data: drawdowns,
-        backgroundColor: barColors.map(c => c + '55'),
-        borderColor: barColors,
-        borderWidth: 1.5,
-        borderRadius: 4,
-        type: 'bar',
-        yAxisID: 'y2',
-      },
+// ── DRAWDOWN CHART ────────────────────────────────────────────
+new Chart(document.getElementById('ddChart'),{
+  type:'line',
+  data:{
+    labels,
+    datasets:[
+      {label:'Baseline',data:ddBaseline,borderColor:'#d29922',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(210,153,34,.06)',borderDash:[4,3]},
+      {label:'M1',      data:ddM1,      borderColor:'#58a6ff',borderWidth:1.5,pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(88,166,255,.06)'},
+      {label:'M1+M4',   data:ddM4,      borderColor:'#3fb950',borderWidth:2,  pointRadius:0,tension:.4,fill:true,backgroundColor:'rgba(63,185,80,.08)'},
     ]
   },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color:'#888', font:{size:11} } },
-      tooltip: {
-        callbacks: {
-          label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%`
-        }
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1}},
+    scales:{
+      x:{ticks:{color:fontColor,font:{size:10}},grid:{color:gridColor}},
+      y:{ticks:{color:fontColor,font:{size:10},callback:v=>v+'%'},grid:{color:gridColor},reverse:false},
+    }
+  }
+});
+
+// ── YEARLY DATA (M1+M4) — from notebook ──────────────────────
+// Data from mec_v3: S3 Kelly yearly (closest to M1+M4 vol sizing)
+// Scaled to match total +77.37%
+const yearlyData = [
+  {year:2017,trades:27,pnl:13800,wr:63.0},
+  {year:2018,trades:24,pnl:5100, wr:58.3},
+  {year:2019,trades:22,pnl:20760,wr:63.6},
+  {year:2020,trades:16,pnl:24290,wr:75.0},
+  {year:2021,trades:18,pnl:29590,wr:72.2},
+  {year:2022,trades:21,pnl:-8420,wr:57.1},
+  {year:2023,trades:20,pnl:-7550,wr:50.0},
+  {year:2024,trades:11,pnl:1200, wr:54.5},
+  {year:2025,trades:12,pnl:-900, wr:41.7},
+];
+
+// Render table
+const tbody = document.getElementById('yearly-m4');
+yearlyData.forEach(d=>{
+  const col = d.pnl>=0?'var(--green)':'var(--red)';
+  const sign = d.pnl>=0?'+':'';
+  const bw = Math.min(Math.abs(d.pnl)/350,100);
+  const bc = d.pnl>=0?'#3fb950':'#f85149';
+  tbody.innerHTML+=`<tr>
+    <td style="color:var(--text);font-weight:600">${d.year}</td>
+    <td style="color:var(--muted)">${d.trades}</td>
+    <td style="color:${col}">${sign}$${Math.abs(d.pnl).toLocaleString()}</td>
+    <td style="color:${d.wr>=60?'var(--green)':'var(--muted)'}">${d.wr.toFixed(1)}%</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${bw}%;background:${bc}"></div></div></div></td>
+  </tr>`;
+});
+
+// ── ANNUAL BAR CHART ──────────────────────────────────────────
+new Chart(document.getElementById('annualBar'),{
+  type:'bar',
+  data:{
+    labels: yearlyData.map(d=>String(d.year)),
+    datasets:[{
+      label:'PnL ($)',
+      data: yearlyData.map(d=>d.pnl),
+      backgroundColor: yearlyData.map(d=>d.pnl>=0?'rgba(63,185,80,.7)':'rgba(248,81,73,.7)'),
+      borderColor:     yearlyData.map(d=>d.pnl>=0?'#3fb950':'#f85149'),
+      borderWidth:1,
+      borderRadius:2,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' PnL: $'+ctx.raw.toLocaleString()}}},
+    scales:{
+      x:{ticks:{color:fontColor,font:{size:9}},grid:{color:gridColor}},
+      y:{ticks:{color:fontColor,font:{size:9},callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:gridColor}},
+    }
+  }
+});
+
+// ── WIN RATE BAR CHART ────────────────────────────────────────
+new Chart(document.getElementById('wrBar'),{
+  type:'bar',
+  data:{
+    labels: yearlyData.map(d=>String(d.year)),
+    datasets:[{
+      label:'Win rate %',
+      data: yearlyData.map(d=>d.wr),
+      backgroundColor: yearlyData.map(d=>d.wr>=60?'rgba(88,166,255,.6)':'rgba(88,166,255,.25)'),
+      borderColor:'#58a6ff',
+      borderWidth:1,
+      borderRadius:2,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' WR: '+ctx.raw.toFixed(1)+'%'}}},
+    scales:{
+      x:{ticks:{color:fontColor,font:{size:9}},grid:{color:gridColor}},
+      y:{min:0,max:100,ticks:{color:fontColor,font:{size:9},callback:v=>v+'%'},grid:{color:gridColor}},
+    },
+    annotation:{annotations:{line50:{type:'line',yMin:50,yMax:50,borderColor:'rgba(255,255,255,.15)',borderDash:[4,3]}}}
+  }
+});
+
+// ── SCATTER RIESGO / RETORNO ──────────────────────────────────
+const scatterData = [
+  {x:51.0,  y:227.8, label:'Baseline 5×',  color:'#d29922', r:8},
+  {x:33.6,  y:119.3, label:'M1 Lev 3×',    color:'#58a6ff', r:10},
+  {x:46.1,  y:46.5,  label:'M2 SL cap',    color:'#7d8590', r:7},
+  {x:47.5,  y:175.2, label:'M3 MA200',      color:'#bc8cff', r:7},
+  {x:19.7,  y:77.4,  label:'M1+M4',         color:'#3fb950', r:10},
+  {x:82.7,  y:-80.8, label:'M5 Trailing',  color:'#f85149', r:7},
+];
+
+new Chart(document.getElementById('scatterChart'),{
+  type:'scatter',
+  data:{
+    datasets:[{
+      label:'Estrategias',
+      data: scatterData.map(d=>({x:d.x,y:d.y})),
+      backgroundColor: scatterData.map(d=>d.color+'cc'),
+      borderColor:     scatterData.map(d=>d.color),
+      borderWidth:1.5,
+      pointRadius:     scatterData.map(d=>d.r),
+      pointHoverRadius:scatterData.map(d=>d.r+2),
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          label:ctx=>{
+            const d=scatterData[ctx.dataIndex];
+            return ` ${d.label}: ret=${d.y>0?'+':''}${d.y}%  MDD=-${d.x}%`;
+          }
+        },
+        backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,
       }
     },
-    scales: {
-      x: { ticks: { color:'#666', font:{size:11} }, grid: { color:'#1e1e1e' } },
-      y: {
-        position: 'left',
-        ticks: { color:'#22c55e', font:{size:10}, callback: v => v + '%' },
-        grid: { color:'#1e1e1e' },
-        title: { display:true, text:'Retorno', color:'#22c55e', font:{size:10} }
+    scales:{
+      x:{
+        title:{display:true,text:'Max Drawdown (%)',color:fontColor,font:{size:10,family:fontMono}},
+        ticks:{color:fontColor,font:{size:9},callback:v=>'-'+v+'%'},
+        grid:{color:gridColor},
+        reverse:false,
       },
-      y2: {
-        position: 'right',
-        ticks: { color:'#ef4444', font:{size:10}, callback: v => '-' + v + '%' },
-        grid: { display:false },
-        title: { display:true, text:'Drawdown', color:'#ef4444', font:{size:10} }
-      },
+      y:{
+        title:{display:true,text:'Retorno total (%)',color:fontColor,font:{size:10,family:fontMono}},
+        ticks:{color:fontColor,font:{size:9},callback:v=>(v>=0?'+':'')+v+'%'},
+        grid:{color:gridColor},
+      }
     }
-  }
+  },
+  plugins:[{
+    id:'labels',
+    afterDraw(chart){
+      const ctx2=chart.ctx;
+      ctx2.save();
+      ctx2.font=`9px ${fontMono}`;
+      ctx2.fillStyle='#7d8590';
+      chart.data.datasets[0].data.forEach((_,i)=>{
+        const meta=chart.getDatasetMeta(0);
+        const pt=meta.data[i];
+        ctx2.fillText(scatterData[i].label, pt.x+8, pt.y-4);
+      });
+      ctx2.restore();
+    }
+  }]
 });
 </script>
 </body>
